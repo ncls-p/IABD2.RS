@@ -1,5 +1,4 @@
-use std::env;
-
+use dotenv::dotenv;
 use serenity::async_trait;
 use serenity::builder::CreateEmbed;
 use serenity::framework::standard::macros::{command, group};
@@ -7,9 +6,11 @@ use serenity::framework::standard::{CommandResult, StandardFramework};
 use serenity::model::channel::Message;
 use serenity::model::prelude::Ready;
 use serenity::prelude::*;
+use serenity::utils::Colour;
+use std::env;
 
 #[group]
-#[commands(ping, help)]
+#[commands(ping, help, infos, github, rust)]
 struct General;
 
 struct Handler;
@@ -17,16 +18,20 @@ struct Handler;
 #[async_trait]
 impl EventHandler for Handler {
     async fn ready(&self, ctx: Context, _ready: Ready) {
+        let wakeup_channel_id = env::var("WAKEUP_CHANNEL_ID").expect("wakeup channel id");
+        let wakeup_channel_id = wakeup_channel_id.parse::<u64>().expect("parse u64");
         let channel = ctx
             .http
-            .get_channel(1073264586653978697)
+            .get_channel(wakeup_channel_id)
             .await
             .expect("Error getting channel");
 
+        let selim_id = env::var("SELIM_ID").expect("selim id");
+        let content = format!("T'as vu je suis codé en rust ! <@{}>", selim_id);
         channel
             .id()
             .send_message(&ctx.http, |m| {
-                m.content("T'as vu je suis codé en rust ! <@296305445218287618>");
+                m.content(content);
                 m
             })
             .await
@@ -36,6 +41,7 @@ impl EventHandler for Handler {
 
 #[tokio::main]
 async fn main() {
+    dotenv().ok();
     let framework = StandardFramework::new()
         .configure(|c| c.prefix("*")) // set the bot's prefix to "*"
         .group(&GENERAL_GROUP);
@@ -72,23 +78,59 @@ async fn ping(ctx: &Context, msg: &Message) -> CommandResult {
 
 #[command]
 async fn help(ctx: &Context, msg: &Message) -> CommandResult {
-    // Create a new Embed
     let mut embed = CreateEmbed::default();
     embed
         .title("Commandes")
         .description("Liste des commandes")
         .field("*ping", "Renvoie pong", false)
         .field("*help", "Renvoie ce message", false)
+        .field("*infos", "Renvoie des infos sur le bot", false)
         .field("*github", "Renvoie le lien du github", false)
         .field("*rust", "Renvoie le lien du rust", false);
 
-    // Clone the embed
     let cloned_embed = embed.clone();
 
-    // Send it
     msg.channel_id
         .send_message(&ctx.http, |m| m.set_embed(cloned_embed))
         .await?;
+
+    Ok(())
+}
+
+#[command]
+async fn infos(ctx: &Context, msg: &Message) -> CommandResult {
+    let mut embed = CreateEmbed::default();
+    embed
+        .title("Infos")
+        .description("Infos sur le bot")
+        .field("Créateur", "Ncls", false)
+        .field("Langage", "Rust", false)
+        .field("Github", "https://github.com/ncls-p/IABD2.RS", false)
+        .field("Version", "0.1.0", false)
+        .field("Librairie", "Serenity", false)
+        .color(Colour::PURPLE)
+        .url("https://github.com/ncls-p/IABD2.RS")
+        .image("https://cdn.discordapp.com/attachments/1028352036049277060/1156246329736044676/download.png?ex=651445cf&is=6512f44f&hm=19e23e3d7ec03497772c97daccaa35cbb978df8e4c104414c0c2e63c547091f0&");
+
+    let cloned_embed = embed.clone();
+
+    msg.channel_id
+        .send_message(&ctx.http, |m| m.set_embed(cloned_embed))
+        .await?;
+
+    Ok(())
+}
+
+#[command]
+async fn github(ctx: &Context, msg: &Message) -> CommandResult {
+    msg.reply(ctx, "https://github.com/ncls-p/IABD2.RS").await?;
+
+    Ok(())
+}
+
+#[command]
+async fn rust(ctx: &Context, msg: &Message) -> CommandResult {
+    msg.reply(ctx, "https://www.rust-lang.org/").await?;
 
     Ok(())
 }
