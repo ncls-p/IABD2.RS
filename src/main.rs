@@ -1,12 +1,15 @@
 use dotenv::dotenv;
-use serenity::async_trait;
-use serenity::builder::CreateEmbed;
-use serenity::framework::standard::macros::{command, group};
-use serenity::framework::standard::{CommandResult, StandardFramework};
-use serenity::model::channel::Message;
-use serenity::model::prelude::Ready;
-use serenity::prelude::*;
-use serenity::utils::Colour;
+use serenity::{
+    async_trait,
+    builder::CreateEmbed,
+    framework::standard::{
+        macros::{command, group},
+        CommandResult, StandardFramework,
+    },
+    model::{channel::Message, gateway::GatewayIntents, prelude::Ready},
+    prelude::*,
+    utils::Colour,
+};
 use std::env;
 
 #[group]
@@ -45,6 +48,7 @@ impl EventHandler for Handler {
 #[tokio::main]
 async fn main() {
     dotenv().ok();
+
     let framework = StandardFramework::new()
         .configure(|c| c.prefix("*")) // set the bot's prefix to "*"
         .group(&GENERAL_GROUP);
