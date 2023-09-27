@@ -4,6 +4,6 @@ WORKDIR /usr/src/app
 
 COPY . .
 
-RUN cargo build --release --locked
+RUN cargo build
 
-CMD ["./target/release/esgi-bot"]
+CMD ["cargo", "run"]
