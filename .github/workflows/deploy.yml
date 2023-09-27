@@ -42,7 +42,6 @@ jobs:
   buildAndRun:
     needs: uploadFiles
     runs-on: ubuntu-latest
-    timeout-minutes: 45
     env:
       DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
       WAKEUP_CHANNEL_ID: ${{ secrets.WAKEUP_CHANNEL_ID }}
