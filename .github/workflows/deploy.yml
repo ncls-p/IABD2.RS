@@ -1,0 +1,71 @@
+name: Deploy
+
+on:
+  push:
+
+jobs:
+  cleanFiles:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Executing remote command
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          port: ${{ secrets.PORT }}
+          key: ${{ secrets.SSHKEY }}
+          script: |
+            if [ -d "/home/blury/esgi/bot/iabd2rs" ]; then
+              rm -rf /home/blury/esgi/bot/iabd2rs
+            fi
+
+  uploadFiles:
+    runs-on: ubuntu-latest
+    needs: cleanFiles
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Copy repository contents via scp
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          port: ${{ secrets.PORT }}
+          key: ${{ secrets.SSHKEY }}
+          source: "."
+          target: "/home/blury/esgi/bot/iabd2rs"
+
+  buildAndRun:
+    needs: uploadFiles
+    runs-on: ubuntu-latest
+    env:
+      DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+      WAKEUP_CHANNEL_ID: ${{ secrets.WAKEUP_CHANNEL_ID }}
+      DISCORD_GUILD_ID: ${{ secrets.DISCORD_GUILD_ID }}
+      SELIM_ID: ${{ secrets.SELIM_ID }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Executing remote command
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          port: ${{ secrets.PORT }}
+          key: ${{ secrets.SSHKEY }}
+          envs: DISCORD_TOKEN, WAKEUP_CHANNEL_ID, DISCORD_GUILD_ID, SELIM_ID
+          script: |
+            cd /home/blury/esgi/bot/iabd2rs
+            touch .env
+            echo "DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}" >> .env
+            echo "WAKEUP_CHANNEL_ID=${{ secrets.WAKEUP_CHANNEL_ID }}" >> .env
+            echo "DISCORD_GUILD_ID=${{ secrets.DISCORD_GUILD_ID }}" >> .env
+            echo "SELIM_ID=${{ secrets.SELIM_ID }}" >> .env
+
+            docker compose down --remove-orphans
+            docker compose up -d
